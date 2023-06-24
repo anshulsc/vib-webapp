@@ -24,14 +24,14 @@ py.offline.init_notebook_mode()
 # Making segments
 def make_segments(df_10s, num_segments = 10, num_dp = 12000):
     num_dp = int(df_10s.shape[0])// num_segments
-    df_seg = np.empty((num_segments,num_dp)) # numpy array of 10 seg of 12000 dp each 
+    df_seg = np.empty((num_segments,num_dp))  # numpy array of 10 seg of 12000 dp each 
 
     for i in range(num_segments):
         start_index = i * num_dp
         end_index = start_index + num_dp
         df_seg[i] = df_10s[start_index:end_index]
         
-    return df_seg # return np.array of shape (10,12000)
+    return df_seg  # return np.array of shape (10,12000)
 
 
 
@@ -50,11 +50,11 @@ def plot_data(df,num_segments = 1, xlabel='x', ylabel='y', title='Graph', seg_nu
                                  name=f'Segment {seg_num}',
                                  showlegend=False))
         
-        fig.update_xaxes(title_text=xlabel+"(s)",
+        fig.update_xaxes(title_text="Time(s)",
                          showgrid=True, 
                          gridcolor='lightgray',)
         
-        fig.update_yaxes(title_text=ylabel, 
+        fig.update_yaxes(title_text="Amplitude" ,
                          showgrid=True, 
                          gridcolor='lightgray',)
         
@@ -90,16 +90,19 @@ def plot_data(df,num_segments = 1, xlabel='x', ylabel='y', title='Graph', seg_nu
                          }}, 
                      title_x = 0.5,
                      height=1500 if num_segments != 1 else 500,
+                     width=1000,
                      plot_bgcolor='white',
                      showlegend=False,
                      xaxis=dict(showline=True, linewidth=2, linecolor='black', mirror=True),
                      yaxis=dict(showline=True, linewidth=2, linecolor='black', mirror=True),
-                     margin=dict(l=50, r=50, t=80, b=50)
+                     margin=dict(l=50, r=50, t=80, b=50),
+                     
                      )
     
     
     fig.update_traces(hovertemplate='Time: %{x}s<br>Amp: %{y}') 
-    st.plotly_chart(fig)
+    return fig
+    
     
 #--------------------------------------------------------------------------------------------------------------#   
     
@@ -134,12 +137,12 @@ def plot_fft(x_axis, y_axis,num_segments = 1,
                                  mode='lines', line=dict(color='blue'),
                                  name=f'Segment {seg_num}',showlegend=False))
         
-        fig.update_xaxes(title_text=xlabel,
+        fig.update_xaxes(title_text='Frequency (Hz)',
                          showgrid=True, 
                          gridcolor='lightgray', 
                          )
         
-        fig.update_yaxes(title_text=ylabel,
+        fig.update_yaxes(title_text='Amplitude',
                         showgrid=True, 
                          gridcolor='lightgray', 
                         )
@@ -172,7 +175,7 @@ def plot_fft(x_axis, y_axis,num_segments = 1,
         
     fig.update_traces(hovertemplate='freq: %{x}<br><br>amp: %{y}')
     fig.update_layout(title={
-        'text': title + f' Segement {seg_num}',
+        'text': title,
         'font': {
             'family': 'Arial Bold',
             'size': 18
@@ -180,6 +183,7 @@ def plot_fft(x_axis, y_axis,num_segments = 1,
         hovermode='closest', 
         plot_bgcolor='white',
         showlegend=False,
+        width=1000,
         xaxis=dict(showline=True, linewidth=1, linecolor='black', mirror=True),
         yaxis=dict(showline=True, linewidth=1, linecolor='black', mirror=True),
         margin=dict(l=50, r=50, t=80, b=50))
@@ -189,7 +193,8 @@ def plot_fft(x_axis, y_axis,num_segments = 1,
     if save_path and save_img:
         full_path = f"{save_path}/{title}.png"
         pio.write_image(fig, full_path)  # Save the image
-    st.plotly_chart(fig)
+    
+    return fig
                       
         
 def filter_freq(df_freqseg, amp = 0.2):
@@ -388,7 +393,7 @@ ValueError if the length of keys is greater than 4.
         
 # Plotting on Jupyter notebook    
 
-    st.plotly_chart(fig)
+    return fig
     
 #--------------------------------------------------------------------------------------------------------------------
 
@@ -440,8 +445,8 @@ doc_name (str, optional): The name of the Word document if save_doc is True. Def
                     'family': 'Arial Bold',
                     'size': 15
                     }}, 
-            title_x = 0.3,
-            height = 400,
+            title_x = 0.38,
+            height = 500,
             plot_bgcolor='white',
             xaxis=dict(showline=True, linewidth=2, linecolor='black', mirror=True),
             yaxis=dict(showline=True, linewidth=2, linecolor='black', mirror=True),
@@ -491,7 +496,7 @@ doc_name (str, optional): The name of the Word document if save_doc is True. Def
             
             
                 
-    st.plotly_chart(fig)
+    return fig
     
     
     
