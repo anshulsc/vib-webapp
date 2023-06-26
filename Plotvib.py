@@ -19,7 +19,23 @@ import streamlit as st
 py.offline.init_notebook_mode()
 
 
-
+plotly_colors = [
+    'rgb(31, 119, 180)',  # Blue
+    'rgb(255, 127, 14)',  # Orange
+    'rgb(44, 160, 44)',   # Green
+    'rgb(214, 39, 40)',   # Red
+    'rgb(148, 103, 189)', # Purple
+    'rgb(140, 86, 75)',   # Brown
+    'rgb(227, 119, 194)', # Pink
+    'rgb(127, 127, 127)', # Gray
+    'rgb(188, 189, 34)',  # Olive
+    'rgb(23, 190, 207)',  # Teal
+    'rgb(140, 140, 140)', # Dark Gray
+    'rgb(255, 187, 120)', # Light Orange
+    'rgb(44, 50, 180)',   # Navy Blue
+    'rgb(255, 152, 150)', # Light Red
+    'rgb(214, 39, 40)'    # Red (same as above for emphasis)
+]
 
 # Making segments
 def make_segments(df_10s, num_segments = 10, num_dp = 12000):
@@ -83,14 +99,14 @@ def plot_data(df,num_segments = 1, xlabel='x', ylabel='y', title='Graph', seg_nu
         
 
     fig.update_layout(title = {
-                        'text': title,
+                        'text': title + f' | (Segment {seg_num})',
                         'font': {
                         'family': 'Arial Bold',
                          'size': 25
                          }}, 
-                     title_x = 0.5,
+                     title_x = 0.40,
                      height=1500 if num_segments != 1 else 500,
-                     width=1000,
+                     width=900,
                      plot_bgcolor='white',
                      showlegend=False,
                      xaxis=dict(showline=True, linewidth=2, linecolor='black', mirror=True),
@@ -175,15 +191,15 @@ def plot_fft(x_axis, y_axis,num_segments = 1,
         
     fig.update_traces(hovertemplate='freq: %{x}<br><br>amp: %{y}')
     fig.update_layout(title={
-        'text': title,
+        'text': title + f' | (Segment {seg_num})',
         'font': {
             'family': 'Arial Bold',
             'size': 18
-        }},title_x = 0.5,
+        }},title_x = 0.4,
         hovermode='closest', 
         plot_bgcolor='white',
         showlegend=False,
-        width=1000,
+        width=950,
         xaxis=dict(showline=True, linewidth=1, linecolor='black', mirror=True),
         yaxis=dict(showline=True, linewidth=1, linecolor='black', mirror=True),
         margin=dict(l=50, r=50, t=80, b=50))
@@ -197,7 +213,9 @@ def plot_fft(x_axis, y_axis,num_segments = 1,
     return fig
                       
         
-def filter_freq(df_freqseg, amp = 0.2):
+def filter_freq(df_freqseg, amp = 0.2, file_name=''):
+    if 'or' in file_name.lower():
+        amp = 0.04
 
     fdf_freqseg = np.copy(df_freqseg)
     num = df_freqseg.shape[0]
@@ -270,7 +288,7 @@ ValueError if the length of keys is greater than 4.
     if len(df_keys) == 3:
         colors = ['red', 'blue', 'green']
     else:
-        colors = ['red', 'blue', 'green', 'purple']
+        colors = plotly_colors[:len(df_keys)]
     rows = len(keys) if len(keys)<= 3 else 4
     cols = 2
 
@@ -293,7 +311,8 @@ ValueError if the length of keys is greater than 4.
                     else:
                          show_legend = False
                 fig.add_trace(go.Scatter(
-                    x= np.arange(1,11), y=y_data, 
+                    # x= np.arange(1,11),
+                     y=y_data, 
                     mode='lines+markers', name=segment, line=dict(color=color), showlegend=show_legend),
                     row=i + 1, col=j + 1)
                 
@@ -308,7 +327,8 @@ ValueError if the length of keys is greater than 4.
                                  linewidth=1, 
                                  linecolor='black',
                                 #  mirror=True,
-                            tickvals = [2,4,6,8,10])
+                            # tickvals = [2,4,6,8,10]
+                            )
                 
                 fig.update_yaxes(title_text='Values', row=i + 1, col=j + 1,
                                  showgrid=True, 
@@ -337,13 +357,13 @@ ValueError if the length of keys is greater than 4.
         'font': {
             'family': 'Arial Bold',
             'size': 18
-        }},title_x = 0.5,
+        }},title_x = 0.42,
         hovermode='closest',
         plot_bgcolor='white',
         # xaxis=dict(title='Segment',showline=True, linewidth=1, linecolor='black', mirror=True),
         # yaxis=dict(rangemode='tozero', title='Value',showline=True, linewidth=1, linecolor='black', mirror=True),
         height= rows * 400,
-        width= 1000,
+        width= 950,
         margin=dict(l=50, r=50, t=70, b=50)
     )
     fig.update_traces(hovertemplate='Seg: %{x}<br>Value: %{y}')  # Display y-value on hover
@@ -447,6 +467,7 @@ doc_name (str, optional): The name of the Word document if save_doc is True. Def
                     }}, 
             title_x = 0.38,
             height = 500,
+            width = 950,
             plot_bgcolor='white',
             xaxis=dict(showline=True, linewidth=2, linecolor='black', mirror=True),
             yaxis=dict(showline=True, linewidth=2, linecolor='black', mirror=True),
@@ -545,4 +566,127 @@ def show_feature(features, value='max', title =''):
     )
 
     py.offline.iplot(fig)
-  
+import numpy as np
+import plotly.graph_objects as go
+
+from scipy.interpolate import interp1d
+
+def envelope_plot(df, title="Envelope", 
+                  xlabel='Time', 
+                  ylabel='Amplitude', 
+                  seg_num=1,
+                  show_real=True,
+                  save_img=False, 
+                  save_path='', 
+                  save_doc=False,
+                  doc_name = 'first.docx'):
+    
+    
+    # Prepend the first value of (s) to the interpolating values
+    s = df[seg_num - 1]
+    u_x = [0]
+    u_y = [s[0]]
+
+    # Detect peaks and troughs and mark their location in u_x, u_y, l_x, l_y respectively
+    for k in range(1, len(s) - 1):
+        if (s[k] > s[k-1]) and (s[k] > s[k+1]):
+            u_x.append(k)
+            u_y.append(s[k])
+
+    # Append the last value of (s) to the interpolating values
+    u_x.append(len(s) - 1)
+    u_y.append(s[-1])
+
+    # Fit a model to the (u) value pairs
+    u_p = interp1d(u_x, u_y, kind='cubic', bounds_error=False, fill_value=0.0)
+
+    # Evaluate the upper envelope model over the domain of (s)
+    q_u = u_p(np.arange(len(s)))
+#     mask = q_u <= 0.02
+#     q_u[mask] = s.mean() + s[mask]*0.2
+    
+    fig = go.Figure()
+    if show_real:
+        fig.add_trace(go.Scatter(
+            x= np.arange(0, 1, 1/12000),
+            y=s,
+            mode='lines',
+            name='Vibrational Data'
+        ))
+
+    # Add trace for the upper envelope
+    fig.add_trace(go.Scatter(
+       x= np.arange(0, 1, 1/12000),
+        y=q_u,
+        mode='lines',
+        name='Upper Envelope',
+        line=dict(color='red')
+    ))
+    
+    fig.update_xaxes(title_text= xlabel+"(s)",
+                         showgrid=True, 
+                         gridcolor='lightgray',)
+        
+    fig.update_yaxes(title_text=ylabel, 
+                         showgrid=True, 
+                         gridcolor='lightgray',)
+ 
+    fig.update_layout(title = {
+                        'text': title + f' | (Segment {seg_num})',
+                        'font': {
+                        'family': 'Arial Bold',
+                         'size': 25
+                         }}, 
+                     title_x = 0.4,
+                     height= 500,
+                     plot_bgcolor='white',
+                     showlegend=False,
+                     xaxis=dict(showline=True, linewidth=2, linecolor='black', mirror=True),
+                     yaxis=dict(showline=True, linewidth=2, linecolor='black', mirror=True),
+                     margin=dict(l=50, r=50, t=80, b=50)
+                     )
+    title_ = title
+    # -------- SAVING IT AS A  Image------------
+
+    if save_path and save_img:
+        full_path = f"{save_path}/{title_}.png"
+        pio.write_image(fig, full_path)  # Save the image   
+        
+        
+# -------- SAVING IT AS A DOCUMENT------------
+
+    # if save_doc and save_path:
+    #     doc_path = os.path.join(save_path, doc_name)
+    #     temp_doc = None
+    #     if doc_path and os.path.exists(doc_path):
+    #         document = docx.Document(doc_path)
+    #         document.save(os.path.join(save_path, "temp.docx"))
+    #         temp_doc = docx.Document(os.path.join(save_path, "temp.docx"))
+    #         document = docx.Document()
+    #     else:
+    #         document = docx.Document()
+            
+            
+     # Create a new paragraph with the title
+        # document.add_paragraph(f'{title_}') 
+    
+        # with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmpfile:
+        #     image_path = tmpfile.name
+        #     pio.write_image(fig, image_path)
+        #     document.add_picture(image_path, width=Inches(4))
+     
+        # if temp_doc != None:
+        #     for element in temp_doc.element.body:
+        #         document.element.body.append(element)
+
+   
+        #     os.remove(os.path.join(save_path, "temp.docx"))
+
+        # if doc_path is None:
+        #     document.save(f"{doc_name}.docx")
+        # else:
+        #     document.save(doc_path)
+            
+            
+                
+    return fig
