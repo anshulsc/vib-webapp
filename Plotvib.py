@@ -53,18 +53,27 @@ def make_segments(df_10s, num_segments = 10, num_dp = 12000):
 
 
 # Plotting Data
-def plot_data(df,num_segments = 1, xlabel='x', ylabel='y', title='Graph', seg_num=1):
+def plot_data(df,
+              num_segments = 1,
+                xlabel='x', 
+                ylabel='y', 
+                title='Graph', 
+                seg_num=1,
+                sampling_freq = 12000,):
     rows = 5
     cols = 2
     if num_segments == 1:
         
         fig = go.Figure()
         
-        fig.add_trace(go.Scatter(x = np.arange(0, 1, 1/12000),y=df[seg_num - 1],
+        fig.add_trace(go.Scatter(x = np.arange(0, 1, 1/sampling_freq),
+                                 y=df[seg_num - 1],
                                  mode='lines',
                                  line=dict(color='blue'),
-                                 name=f'Segment {seg_num}',
-                                 showlegend=False))
+                                 name=f'{title} |  Segment {seg_num}',
+                                 showlegend=False,
+                                 
+                                 ))
         
         fig.update_xaxes(title_text="Time(s)",
                          showgrid=True, 
@@ -87,7 +96,7 @@ def plot_data(df,num_segments = 1, xlabel='x', ylabel='y', title='Graph', seg_nu
             col = (i % cols) + 1
 
             fig.add_trace(go.Scatter(
-                x = np.arange(0, 1, 1/12000),
+                x = np.arange(0, 1, 1/sampling_freq),
                 y=df[i], mode='lines',
                 line=dict(color='blue'),
                 name=f'Segment {i+1}',
@@ -579,7 +588,8 @@ def envelope_plot(df, title="Envelope",
                   save_img=False, 
                   save_path='', 
                   save_doc=False,
-                  doc_name = 'first.docx'):
+                  doc_name = 'first.docx',
+                  sampling_freq = 12000):
     
     
     # Prepend the first value of (s) to the interpolating values
@@ -608,18 +618,18 @@ def envelope_plot(df, title="Envelope",
     fig = go.Figure()
     if show_real:
         fig.add_trace(go.Scatter(
-            x= np.arange(0, 1, 1/12000),
+            x= np.arange(0, 1, 1/sampling_freq),
             y=s,
             mode='lines',
-            name='Vibrational Data'
+            name= title + f'vib | (Seg{seg_num})',
         ))
 
     # Add trace for the upper envelope
     fig.add_trace(go.Scatter(
-       x= np.arange(0, 1, 1/12000),
+       x= np.arange(0, 1, 1/sampling_freq),
         y=q_u,
         mode='lines',
-        name='Upper Envelope',
+        name=title + f'env | (Seg{seg_num})',
         line=dict(color='red')
     ))
     
@@ -639,11 +649,12 @@ def envelope_plot(df, title="Envelope",
                          }}, 
                      title_x = 0.4,
                      height= 500,
+                     width=950,
                      plot_bgcolor='white',
                      showlegend=False,
                      xaxis=dict(showline=True, linewidth=2, linecolor='black', mirror=True),
                      yaxis=dict(showline=True, linewidth=2, linecolor='black', mirror=True),
-                     margin=dict(l=50, r=50, t=80, b=50)
+                     margin=dict(l=50, r=20, t=100, b=50)
                      )
     title_ = title
     # -------- SAVING IT AS A  Image------------
